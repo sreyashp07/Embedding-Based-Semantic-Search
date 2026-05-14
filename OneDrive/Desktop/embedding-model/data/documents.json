@@ -1,0 +1,52 @@
+[
+  {
+    "id": 1,
+    "title": "Introduction to Machine Learning",
+    "content": "Machine learning is a subset of artificial intelligence that enables systems to learn and improve from experience without being explicitly programmed."
+  },
+  {
+    "id": 2,
+    "title": "Deep Learning and Neural Networks",
+    "content": "Deep learning uses neural networks with many layers to model complex patterns in data, powering applications like image recognition and natural language processing."
+  },
+  {
+    "id": 3,
+    "title": "Natural Language Processing Basics",
+    "content": "NLP allows computers to understand, interpret, and generate human language, enabling applications like chatbots, translation, and sentiment analysis."
+  },
+  {
+    "id": 4,
+    "title": "Python Programming for Beginners",
+    "content": "Python is a beginner-friendly, high-level programming language known for its simple syntax and wide use in data science, web development, and automation."
+  },
+  {
+    "id": 5,
+    "title": "How Search Engines Work",
+    "content": "Search engines crawl the web, index content, and rank pages based on relevance using algorithms like PageRank and keyword matching."
+  },
+  {
+    "id": 6,
+    "title": "Introduction to Vector Databases",
+    "content": "Vector databases store high-dimensional embeddings and allow fast similarity search, making them ideal for semantic search and recommendation systems."
+  },
+  {
+    "id": 7,
+    "title": "The Science of Happiness",
+    "content": "Happiness is linked to positive social relationships, physical health, purpose, and gratitude. Psychology research shows these factors significantly boost well-being."
+  },
+  {
+    "id": 8,
+    "title": "Climate Change and Global Warming",
+    "content": "Climate change refers to long-term shifts in temperatures and weather patterns, largely caused by human activities like burning fossil fuels and deforestation."
+  },
+  {
+    "id": 9,
+    "title": "Healthy Diet and Nutrition",
+    "content": "A balanced diet rich in fruits, vegetables, whole grains, and lean proteins supports physical health, mental clarity, and disease prevention."
+  },
+  {
+    "id": 10,
+    "title": "Cosine Similarity in Information Retrieval",
+    "content": "Cosine similarity measures the angle between two vectors and is widely used in information retrieval to determine document relevance to a query."
+  }
+]
