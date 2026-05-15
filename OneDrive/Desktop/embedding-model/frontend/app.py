@@ -3,6 +3,7 @@ import requests
 import sys
 import os
 
+# Add project root to path so we can import utils/helpers.py
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from utils.helpers import truncate_text, score_to_percentage, get_score_color
 
@@ -40,76 +41,77 @@ st.markdown("""
 
 def check_api_health():
     try:
-        response = requests.get(API_URL + "/", timeout=3)
-        return response.status_code == 200
+        r = requests.get(API_URL + "/", timeout=3)
+        return r.status_code == 200
     except:
         return False
 
 
 def get_status():
     try:
-        response = requests.get(API_URL + "/status", timeout=5)
-        return response.json()
+        r = requests.get(API_URL + "/status", timeout=5)
+        return r.json()
     except:
         return {"indexed": False, "document_count": 0}
 
 
 def trigger_index():
     try:
-        response = requests.post(API_URL + "/index", json={}, timeout=60)
-        return response.json()
+        r = requests.post(API_URL + "/index", json={}, timeout=60)
+        return r.json()
     except Exception as e:
         return {"success": False, "message": str(e)}
 
 
-def search_documents(query, top_k):
+def do_search(query, top_k):
     try:
-        payload = {"query": query, "top_k": top_k}
-        response = requests.post(
+        r = requests.post(
             API_URL + "/search",
-            json=payload,
+            json={"query": query, "top_k": top_k},
             timeout=30
         )
-        if response.status_code == 200:
-            return {"success": True, "data": response.json()}
-        else:
-            error = response.json().get("detail", "Unknown error")
-            return {"success": False, "error": error}
+        if r.status_code == 200:
+            return {"success": True, "data": r.json()}
+        return {"success": False, "error": r.json().get("detail", "Error")}
     except requests.exceptions.ConnectionError:
         return {"success": False, "error": "Cannot connect to API. Is FastAPI running?"}
     except Exception as e:
         return {"success": False, "error": str(e)}
 
 
-def build_card(rank, title, pct, badge_class, content, score, doc_id):
-    card = "<div class='result-card'>"
-    card += "<div style='display:flex;justify-content:space-between;align-items:center;'>"
-    card += "<span style='font-size:18px;font-weight:bold;'>"
-    card += "#" + str(rank) + " -- " + title
-    card += "</span>"
-    card += "<span class='score-badge " + badge_class + "'>"
-    card += "🎯 " + pct + " match"
-    card += "</span>"
-    card += "</div>"
-    card += "<p style='color:#94a3b8;margin-top:8px;font-size:14px;'>"
-    card += truncate_text(content, 250)
-    card += "</p>"
-    card += "<small style='color:#6b7280;'>"
-    card += "Score: " + str(score) + " | ID: " + str(doc_id)
-    card += "</small>"
-    card += "</div>"
-    return card
+def make_card(rank, title, pct, badge_class, content, score, doc_id):
+    return (
+        "<div class='result-card'>"
+        "<div style='display:flex;justify-content:space-between;align-items:center;'>"
+        "<span style='font-size:18px;font-weight:bold;'>"
+        + "#" + str(rank) + " &mdash; " + str(title) +
+        "</span>"
+        "<span class='score-badge " + badge_class + "'>"
+        + "Match: " + str(pct) +
+        "</span>"
+        "</div>"
+        "<p style='color:#94a3b8;margin-top:8px;font-size:14px;'>"
+        + truncate_text(str(content), 250) +
+        "</p>"
+        "<small style='color:#6b7280;'>"
+        + "Score: " + str(score) + " | Doc ID: " + str(doc_id) +
+        "</small>"
+        "</div>"
+    )
 
 
+# ── SIDEBAR ──────────────────────────────────────────
 with st.sidebar:
     st.title("Settings")
     st.markdown("---")
 
     api_healthy = check_api_health()
+
     if api_healthy:
         st.success("API Connected")
     else:
         st.error("API Offline")
+        st.markdown("Start the backend:")
         st.code("cd backend\nuvicorn main:app --reload", language="bash")
 
     st.markdown("---")
@@ -122,20 +124,22 @@ with st.sidebar:
 
     if st.button("Re-index Documents", use_container_width=True):
         with st.spinner("Indexing..."):
-            result = trigger_index()
-            if result.get("success"):
-                st.success(result["message"])
-                st.rerun()
-            else:
-                st.error(result.get("message", "Failed"))
+            res = trigger_index()
+        if res.get("success"):
+            st.success(res.get("message", "Done"))
+            st.rerun()
+        else:
+            st.error(res.get("message", "Failed"))
 
     st.markdown("---")
     top_k = st.slider("Number of results", 1, 10, 5)
     st.markdown("---")
     st.markdown("Model: all-MiniLM-L6-v2")
     st.markdown("Method: Cosine Similarity")
+    st.markdown("[GitHub Repo](https://github.com/sreyashp07/Embedding-Based-Semantic-Search)")
 
 
+# ── MAIN PAGE ─────────────────────────────────────────
 st.title("Embedding-Based Semantic Search")
 st.markdown("Search documents by meaning, not just keywords.")
 st.markdown("---")
@@ -143,7 +147,7 @@ st.markdown("---")
 col1, col2 = st.columns([5, 1])
 with col1:
     query = st.text_input(
-        "Search",
+        "query",
         placeholder="e.g. how do machines learn from data",
         label_visibility="collapsed"
     )
@@ -171,65 +175,76 @@ with c4:
 
 st.markdown("---")
 
+# ── SEARCH LOGIC ──────────────────────────────────────
 if search_clicked and query.strip():
     if not api_healthy:
-        st.error("FastAPI is not running.")
+        st.error("FastAPI is not running. Start it first:")
         st.code("cd backend\nuvicorn main:app --reload", language="bash")
     else:
         with st.spinner("Searching..."):
-            result = search_documents(query, top_k)
+            result = do_search(query, top_k)
 
         if result["success"]:
-            data = result["data"]
+            data    = result["data"]
             results = data["results"]
-            st.subheader("Top " + str(len(results)) + " results for: " + data["query"])
+
+            st.subheader("Results for: " + str(data["query"]))
 
             if not results:
-                st.warning("No results found. Try different search terms.")
+                st.warning("No results found. Try a different query.")
             else:
                 for rank, doc in enumerate(results, start=1):
                     score = doc["score"]
-                    pct = score_to_percentage(score)
+                    pct   = score_to_percentage(score)
                     color = get_score_color(score)
 
                     if color == "green":
-                        badge_class = "high-score"
+                        badge = "high-score"
                     elif color == "orange":
-                        badge_class = "mid-score"
+                        badge = "mid-score"
                     else:
-                        badge_class = "low-score"
+                        badge = "low-score"
 
-                    card_html = build_card(
-                        rank,
-                        doc["title"],
-                        pct,
-                        badge_class,
-                        doc["content"],
-                        score,
-                        doc["id"]
+                    st.markdown(
+                        make_card(rank, doc["title"], pct, badge,
+                                  doc["content"], score, doc["id"]),
+                        unsafe_allow_html=True
                     )
-                    st.markdown(card_html, unsafe_allow_html=True)
 
             with st.expander("Score Guide"):
                 st.markdown("""
-| Badge | Score | Meaning |
+| Color | Score Range | Meaning |
 |---|---|---|
-| Green | 0.6 to 1.0 | Strong match |
+| Green | 0.6 to 1.0 | Strong semantic match |
 | Orange | 0.35 to 0.59 | Moderate match |
 | Red | 0.0 to 0.34 | Weak match |
                 """)
+
         else:
-            st.error("Search error: " + result["error"])
+            st.error("Search failed: " + str(result["error"]))
 
 elif search_clicked and not query.strip():
     st.warning("Please type something to search.")
 
+
+# ── HOW IT WORKS ──────────────────────────────────────
 with st.expander("How does this work?"):
     st.markdown("""
-You type a query.
-Streamlit sends it to FastAPI.
-FastAPI converts it to a 384-number vector.
-That vector is compared to all document vectors.
-Documents are sorted by similarity score.
-Top results are returned and displayed here.
+**Step 1:** You type a query into the search box.
+
+**Step 2:** Streamlit sends your query to FastAPI via HTTP POST.
+
+**Step 3:** FastAPI converts your query into a 384-number vector using the AI model.
+
+**Step 4:** That vector is compared to all document vectors using cosine similarity.
+
+**Step 5:** Documents are ranked by similarity score from highest to lowest.
+
+**Step 6:** Top results are sent back and displayed as cards with color-coded scores.
+
+**Why this beats keyword search:**
+Keyword search only finds exact word matches.
+Semantic search understands meaning.
+Searching for "joyful" will find documents about "happiness".
+Searching for "AI" will find documents about "machine learning".
     """)
