@@ -10,27 +10,50 @@ from data_loader import load_documents
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("Starting server...")
+    """
+    Runs at server startup.
+    Tries to load saved index first.
+    If no saved index exists, creates one from documents.json.
+    This means search works immediately with no manual setup.
+    """
+    print("=" * 50)
+    print("Starting Semantic Search API")
+    print("=" * 50)
+
     loaded = search_engine.load_index()
+
     if not loaded:
-        print("No index found. Creating now...")
+        print("No saved index found. Building index now...")
         try:
             documents  = load_documents()
             texts      = [doc["content"] for doc in documents]
             embeddings = get_embeddings_batch(texts)
             search_engine.index_documents(documents, embeddings)
+            print("Index built successfully!")
         except FileNotFoundError as e:
-            print(f"Warning: {e}")
+            print("ERROR: " + str(e))
+            print("Server started without index.")
+            print("Fix: Make sure data/documents.json exists")
+
+    print("=" * 50)
+    print("API ready at http://localhost:8000")
+    print("Docs at http://localhost:8000/docs")
+    print("=" * 50)
+
     yield
+
     print("Server shutting down...")
 
 
 app = FastAPI(
     title="Semantic Search API",
+    description="Search documents by meaning using embeddings",
     version="1.0.0",
     lifespan=lifespan
 )
 
+# CORS: allows Streamlit (port 8501) to call FastAPI (port 8000)
+# Without this the browser blocks cross-port requests
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -46,7 +69,7 @@ class SearchRequest(BaseModel):
 
 
 class IndexRequest(BaseModel):
-    data_path: str = "data/documents.json"
+    data_path: str = None
 
 
 @app.get("/")
@@ -77,7 +100,7 @@ def index_documents(request: IndexRequest = IndexRequest()):
         search_engine.index_documents(documents, embeddings)
         return {
             "success":        True,
-            "message":        f"Indexed {len(documents)} documents",
+            "message":        "Indexed " + str(len(documents)) + " documents",
             "document_count": len(documents)
         }
     except FileNotFoundError as e:
@@ -89,11 +112,20 @@ def index_documents(request: IndexRequest = IndexRequest()):
 @app.post("/search")
 def search(request: SearchRequest):
     if not request.query.strip():
-        raise HTTPException(status_code=400, detail="Query cannot be empty")
+        raise HTTPException(
+            status_code=400,
+            detail="Query cannot be empty"
+        )
+
     if search_engine.embeddings is None:
-        raise HTTPException(status_code=503, detail="No documents indexed yet.")
+        raise HTTPException(
+            status_code=503,
+            detail="No documents indexed yet. POST to /index first."
+        )
+
     query_embedding = get_embedding(request.query)
-    results = search_engine.search(query_embedding, top_k=request.top_k)
+    results         = search_engine.search(query_embedding, top_k=request.top_k)
+
     return {
         "query":         request.query,
         "total_results": len(results),
