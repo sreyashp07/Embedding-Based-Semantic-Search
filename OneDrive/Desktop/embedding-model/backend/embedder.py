@@ -21,7 +21,7 @@ def get_embedding(text: str) -> np.ndarray:
 def get_embeddings_batch(texts: list) -> np.ndarray:
     """
     Convert a list of strings into vectors all at once.
-    Used for indexing all documents at startup.
+    Used for indexing all documents at startup. so no hastiness
     Much faster than encoding one by one.
     """
     return model.encode(
