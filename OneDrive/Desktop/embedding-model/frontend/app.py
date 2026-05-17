@@ -198,7 +198,7 @@ if search_clicked and query.strip():
                     pct   = score_to_percentage(score)
                     color = get_score_color(score)
 
-                    if color == "green":
+                    if color == "Green":
                         badge = "high-score"
                     elif color == "orange":
                         badge = "mid-score"
