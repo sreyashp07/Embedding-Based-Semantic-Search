@@ -120,7 +120,7 @@ with st.sidebar:
     if status["indexed"]:
         st.info("Documents indexed: " + str(status["document_count"]))
     else:
-        st.warning("No documents indexed yet")
+        st.warning("No documents indexed yet,Please wait")
 
     if st.button("Re-index Documents", use_container_width=True):
         with st.spinner("Indexing..."):
