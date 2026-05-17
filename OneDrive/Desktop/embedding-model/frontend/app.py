@@ -211,13 +211,13 @@ if search_clicked and query.strip():
                         unsafe_allow_html=True
                     )
 
-            with st.expander("Score Guide"):
+            with st.expander("Score Guide  "):
                 st.markdown("""
 | Color | Score Range | Meaning |
 |---|---|---|
 | Green | 0.6 to 1.0 | Strong semantic match |
-| Orange | 0.35 to 0.59 | Moderate match |
-| Red | 0.0 to 0.34 | Weak match |
+| Orange | 0.33 to 0.59 | Moderate match |
+| Red | 0.0 to 0.33 | Weak match |
                 """)
 
         else:
