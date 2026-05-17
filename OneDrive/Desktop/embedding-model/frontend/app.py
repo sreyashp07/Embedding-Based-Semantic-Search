@@ -236,7 +236,7 @@ with st.expander("How does this work?"):
 
 **Step 3:** FastAPI converts your query into a 384-number vector using the AI model.
 
-**Step 4:** That vector is compared to all document vectors using cosine similarity.
+**Step 4:** That dedicated vector is compared to all document vectors using cosine similarity.
 
 **Step 5:** Documents are ranked by similarity score from highest to lowest.
 
