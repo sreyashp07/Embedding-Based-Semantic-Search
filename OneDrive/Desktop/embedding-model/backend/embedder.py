@@ -15,7 +15,7 @@ def get_embedding(text: str) -> np.ndarray:
     Convert one string into a 384-dimensional vector.
     Used for converting the user search query.
     """
-    return model.encode(text, convert_to_numpy=True)
+    return model.encode(text, convert_to_numpy=true)
 
 
 def get_embeddings_batch(texts: list) -> np.ndarray:
