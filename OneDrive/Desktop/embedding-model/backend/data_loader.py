@@ -21,7 +21,7 @@ def load_documents(path: str = None) -> list:
 
     if not os.path.exists(path):
         raise FileNotFoundError(
-            f"Cannot find: {path}\n"
+            f"Cannot find the required: {path}\n"
             f"Make sure data/documents.json exists in your project root."
         )
 
